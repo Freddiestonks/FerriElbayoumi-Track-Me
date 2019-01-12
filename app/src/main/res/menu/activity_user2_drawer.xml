@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:tools="http://schemas.android.com/tools"
+      tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_userInfo"
+            android:icon="@drawable/ic_account_circle_black_24dp"
+            android:title="My Informations"/>
+        <item
+            android:id="@+id/nav_fitnessLevel"
+            android:icon="@drawable/ic_fitness_center_black_24dp"
+            android:title="My Fitness Level"/>
+        <item
+            android:id="@+id/nav_requests"
+            android:icon="@drawable/ic_gavel_black_24dp"
+            android:title="My Requests"/>
+        <item
+            android:id="@+id/nav_makeRequest"
+            android:icon="@drawable/ic_group_add_black_24dp"
+            android:title="New Public Request"/>
+        <item
+            android:id="@+id/nav_singleRequest"
+            android:icon="@drawable/ic_person_add_black_24dp"
+            android:title="New Private Request"/>
+        <item
+            android:id="@+id/nav_checkRequests"
+            android:icon="@drawable/ic_accessibility_black_24dp"
+            android:title="My Private Requests"/>
+
+    </group>
+
+    <item android:title="Others">
+        <menu>
+            <item
+                android:id="@+id/nav_share"
+                android:icon="@drawable/ic_menu_share"
+                android:title="Share"/>
+            <item
+                android:id="@+id/nav_logout"
+                android:icon="@drawable/ic_exit_to_app_black_24dp"
+                android:title="Log Out"/>
+        </menu>
+    </item>
+
+</menu>
