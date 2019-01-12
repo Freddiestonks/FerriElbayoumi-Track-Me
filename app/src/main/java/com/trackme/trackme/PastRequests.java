@@ -89,6 +89,11 @@ public class PastRequests extends Fragment {
                                            if (document.get("ApprovalStatus").toString().equals("Accepted")&&document.get("CF").toString().equals(cf.getText().toString())&&document.get("UserID").toString().equals(mAuth.getUid())) {
                                                Log.d(TAG, document.getId() + " => " + document.getData());
                                                accepted = true;
+                                               if(document.get("Subscribe").toString().equals("false")){
+                                                   DBRequestHandler dbRequestHandler = new DBRequestHandler();
+                                                   dbRequestHandler.updateRequestsDB("ApprovalStatus","Pending",document.getId());
+
+                                               }
                                            }
                                            if(accepted) {
                                                db.collection("users")

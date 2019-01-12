@@ -90,7 +90,13 @@ public class Requests extends Fragment {
                                     if (document.get("ApprovalStatus").toString().equals("Pending")) {
                                         Log.d(TAG, document.getId() + " => " + document.getData());
                                         if (requests < 5) {
-                                            company[requests].setText(document.get("Name").toString());
+                                            if(document.get("Subscribe").equals("true")) {
+                                                company[requests].setText(document.get("Name").toString()+ " (S)");
+                                            }
+                                            else {
+                                                company[requests].setText(document.get("Name").toString());
+
+                                            }
                                             setAcceptDeny(document.getId(), requests);
                                         }
                                         requests++;

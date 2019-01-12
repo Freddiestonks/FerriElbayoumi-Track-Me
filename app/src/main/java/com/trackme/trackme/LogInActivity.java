@@ -41,7 +41,10 @@ public class LogInActivity extends AppCompatActivity {
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                login(emailField.getText().toString(),passwordField.getText().toString());
+                if(!emailField.getText().toString().equals("")&& !passwordField.getText().toString().equals("")){
+                    login(emailField.getText().toString(),passwordField.getText().toString());
+                }
+
             }
         });
     }
