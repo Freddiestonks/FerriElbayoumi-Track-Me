@@ -11,13 +11,18 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.Map;
 import java.util.Objects;
@@ -34,21 +39,11 @@ public class SingleRequest extends BaseFragment {
     private CheckBox subscribe;
     private Button mButton;
     private String companyName = "Unknown Company";
-    // private FirebaseFirestore db;
-    private FirebaseAuth mAuth;
-
-
-    public SingleRequest() {
-        // Required empty public constructor
-    }
 
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        mAuth = FirebaseAuth.getInstance();
-        // db = FirebaseFirestore.getInstance();
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_single_request, container, false);
         cf = view.findViewById(R.id.userCF);
         subscribe = view.findViewById(R.id.subscribeBox);
@@ -57,17 +52,38 @@ public class SingleRequest extends BaseFragment {
         return view;
     }
 
+    private boolean userFound = false;
+
     private void buttonClick(){
-        final DBRequestHandler dbRequestHandler = new DBRequestHandler();
         mButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FirebaseUser currentUser = mAuth.getCurrentUser();
+                FirebaseUser currentUser = dao.getCurrentUser();
                 DocumentReference docRef;
-                if(currentUser!=null) {
+                userFound = true;
+
+                // check if the target user CF exists
+                dao.getUserByCf(cf.getText().toString().toUpperCase())
+                    .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                            if (task.isSuccessful()) {
+                                if (task.getResult().isEmpty()) {
+                                    userFound = false;
+                                    Toast.makeText(getActivity(), "No user found!", Toast.LENGTH_SHORT).show();
+                                }
+                                else {
+                                    userFound = true;
+                                    Toast.makeText(getActivity(), "User found! Processing request..", Toast.LENGTH_SHORT).show();
+                                }
+                            } else {
+                                Toast.makeText(getActivity(), "ERROR IN CHECKING USER!", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+
+                if(currentUser!=null && userFound) {
                     docRef = dao.getUserDocument(currentUser.getUid());
-                    // OLD
-                    // docRef = db.collection("users").document(currentUser.getUid());
                     docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                         @Override
                         public void onComplete(@NonNull Task<DocumentSnapshot> task) {
@@ -78,15 +94,28 @@ public class SingleRequest extends BaseFragment {
                                     if(map != null) {
                                         if(map.get("Name") != null){
                                             companyName = Objects.requireNonNull(map.get("Name")).toString();
-                                            dbRequestHandler.generateNewRequest(cf.getText().toString().toUpperCase(),Boolean.toString(subscribe.isChecked()),companyName);
+
+                                            dao.generateNewRequest(cf.getText().toString().toUpperCase(),Boolean.toString(subscribe.isChecked()),companyName)
+                                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                        @Override
+                                                        public void onSuccess(Void aVoid) {
+                                                            Toast.makeText(getActivity(), "Request generated succesfully!", Toast.LENGTH_SHORT).show();
+                                                        }
+                                                    })
+                                                    .addOnFailureListener(new OnFailureListener() {
+                                                        @Override
+                                                        public void onFailure(@NonNull Exception e) {
+                                                            Toast.makeText(getActivity(), "Error while generating request!\n" + e, Toast.LENGTH_SHORT).show();
+                                                        }
+                                                    });
+
                                         }
                                     }
-                                    Log.d(TAG, "DocumentSnapshot data: " + document.getData());
                                 } else {
-                                    Log.d(TAG, "No such document");
+                                    Toast.makeText(getActivity(), "Current user document not found!", Toast.LENGTH_SHORT).show();
                                 }
                             } else {
-                                Log.d(TAG, "get failed with ", task.getException());
+                                Toast.makeText(getActivity(), "Error in getting current user information!\n" + task.getException(), Toast.LENGTH_SHORT).show();
                             }
                         }
                     });

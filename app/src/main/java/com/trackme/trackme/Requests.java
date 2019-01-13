@@ -10,8 +10,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -23,26 +26,17 @@ import static android.content.ContentValues.TAG;
 
 public class Requests extends BaseFragment {
 
-    // private FirebaseFirestore db;
-    private FirebaseAuth mAuth;
     private TextView total;
     private int requests = 0;
     private TextView company[] = new TextView[5];
     private Button accept[] = new Button[5];
     private Button deny[] = new Button[5];
 
-    public Requests() {
-        // Required empty public constructor
-    }
-
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_requests, container, false);
-        mAuth = FirebaseAuth.getInstance();
-        // db = FirebaseFirestore.getInstance();
         total = view.findViewById(R.id.totalRequests);
         company[0] = view.findViewById(R.id.companyName1);
         company[1] = view.findViewById(R.id.companyName2);
@@ -62,7 +56,6 @@ public class Requests extends BaseFragment {
         deny[3] = view.findViewById(R.id.deny4);
         deny[4] = view.findViewById(R.id.deny5);
 
-
         getRequests();
         return view;
     }
@@ -70,7 +63,6 @@ public class Requests extends BaseFragment {
     private void getRequests(){
         if (getArguments() != null) {
             String cf = getArguments().getString("CF");
-            DAO dao = new DAO();
 
             dao.getRequests(cf).addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                 @Override
@@ -80,7 +72,12 @@ public class Requests extends BaseFragment {
                             if (document.get("ApprovalStatus").toString().equals("Pending")) {
                                 Log.d(TAG, document.getId() + " => " + document.getData());
                                 if (requests < 5) {
-                                    company[requests].setText(document.get("Name").toString());
+                                    if (document.get("Subscribe").equals("true")) {
+                                        company[requests].setText(document.get("Name").toString() + " (S)");
+                                    }
+                                    else {
+                                        company[requests].setText(document.get("Name").toString());
+                                    }
                                     setAcceptDeny(document.getId(), requests);
                                 }
                                 requests++;
@@ -88,7 +85,7 @@ public class Requests extends BaseFragment {
                         }
                         total.setText(Integer.toString(requests));
                     } else {
-                        Log.d(TAG, "Error getting documents: ", task.getException());
+                        Toast.makeText(getActivity(), "Error while getting requests!\n" + task.getException(), Toast.LENGTH_SHORT).show();
                     }
                 }
             });
@@ -96,7 +93,6 @@ public class Requests extends BaseFragment {
     }
 
     private  void setAcceptDeny(final String documentID, final int requests){
-        final DBRequestHandler dbRequestHandler = new DBRequestHandler();
         accept[requests].setClickable(true);
         deny[requests].setClickable(true);
         accept[requests].setEnabled(true);
@@ -104,7 +100,19 @@ public class Requests extends BaseFragment {
         accept[requests].setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dbRequestHandler.updateRequestsDB("ApprovalStatus","Accepted",documentID);
+                dao.updateRequestsDB("ApprovalStatus","Accepted",documentID)
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Toast.makeText(getActivity(), "Request accepted succesfully!", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Toast.makeText(getActivity(), "Error while accepting request!\n" + e, Toast.LENGTH_SHORT).show();
+                            }
+                        });
                 accept[requests].setTextColor(Color.GREEN);
                 accept[requests].setClickable(false);
                 deny[requests].setClickable(false);
@@ -115,7 +123,19 @@ public class Requests extends BaseFragment {
         deny[requests].setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dbRequestHandler.updateRequestsDB("ApprovalStatus","Denied",documentID);
+                dao.updateRequestsDB("ApprovalStatus","Denied",documentID)
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Toast.makeText(getActivity(), "Request denied succesfully!", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Toast.makeText(getActivity(), "Error while denying request!\n" + e, Toast.LENGTH_SHORT).show();
+                            }
+                        });
                 deny[requests].setTextColor(Color.RED);
                 accept[requests].setClickable(false);
                 deny[requests].setClickable(false);

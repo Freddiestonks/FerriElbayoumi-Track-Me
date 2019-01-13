@@ -17,11 +17,11 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.common.ConnectionResult;
@@ -46,7 +46,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.List;
@@ -60,31 +59,13 @@ import static com.google.android.gms.fitness.data.DataType.TYPE_STEP_COUNT_DELTA
 public class User extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener {
     private GoogleApiClient mClient = null;
-    // OLD
-    // private FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private static final int GOOGLE_FIT_PERMISSIONS_REQUEST_CODE = 0;
-    private static final String LOG_TAG = "GOOGLE FIT";
     private FusedLocationProviderClient mFusedLocationClient;
     private TextView nav_email;
-    private FirebaseAuth mAuth;
     private View headerView;
     private Double latitude;
     private Double longitude;
     private TextView nav_phone;
     private int total = 0;
-    //Constant variables
-    private final static String dbLastName = "Last Name";
-    private final static String dbCF = "CF";
-    private final static String dbName = "Name";
-    private final static String dbPhone = "Phone Number";
-    private final static String dbYear = "Year";
-    private final static String dbMonth = "Month";
-    private final static String dbday = "Day";
-    private final static String dbGender = "Gender";
-    private final static String dbMale = "Male";
-    private final static String dbFemale = "Female";
-    private final static String dbWeight = "Weight";
-    private final static String dbHeight = "Height";
 
     //String DB variables
     private String cf = "";
@@ -99,7 +80,6 @@ public class User extends BaseActivity
     private String height = "";
     private String type = "";
     private static final int MY_PERMISSIONS_REQUEST = 11;
-    private  DBRequestHandler dbRequestHandler;
     private FitnessOptions fitnessOptions = FitnessOptions.builder()
             .addDataType(TYPE_STEP_COUNT_DELTA, FitnessOptions.ACCESS_READ)
             .addDataType(DataType.AGGREGATE_STEP_COUNT_DELTA, FitnessOptions.ACCESS_READ)
@@ -109,32 +89,26 @@ public class User extends BaseActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user2);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        //setSupportActionBar(toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setTitle("TrackMe");
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        mAuth = FirebaseAuth.getInstance();
-        dbRequestHandler = new DBRequestHandler();
+        FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Snackbar.make(view, "Data updated successfully", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
-//                if(latitude != null && longitude!= null) {
-//                    Toast.makeText(getApplication().getBaseContext(), " current position:\n LA: " + Double.toString(latitude) + " LO: " + Double.toString(longitude), Toast.LENGTH_LONG).show();
-//                }
                 nav_email = findViewById(R.id.nav_email);
-                nav_email.setText(Objects.requireNonNull(mAuth.getCurrentUser()).getEmail());
+                nav_email.setText(Objects.requireNonNull(dao.getCurrentUser()).getEmail());
             }
         });
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
-        final NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        FirebaseUser currentUser = mAuth.getCurrentUser();
+        final NavigationView navigationView = findViewById(R.id.nav_view);
+        FirebaseUser currentUser = dao.getCurrentUser();
         DocumentReference docRef;
         navigationView.setNavigationItemSelectedListener(this);
         headerView = navigationView.getHeaderView(0);
@@ -142,19 +116,15 @@ public class User extends BaseActivity
 
         nav_phone = headerView.findViewById(R.id.phone_number_header);
         nav_email = headerView.findViewById(R.id.nav_email);
-        nav_email.setText(Objects.requireNonNull(mAuth.getCurrentUser()).getEmail());
+        nav_email.setText(Objects.requireNonNull(dao.getCurrentUser()).getEmail());
         UserInfo userInfo = new UserInfo();
         FragmentManager fragmentManager = getSupportFragmentManager();
-        //passerUI(userInfo);
         filler();
-        //Location Services
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         getOldLocation();
         buildFitnessClient();
-        weeklyTotal();
+        dataReader();
         if(currentUser!=null) {
-            // OLD
-            // docRef = db.collection("users").document(currentUser.getUid());
             docRef = dao.getUserDocument(currentUser.getUid());
             docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                 @Override
@@ -187,14 +157,11 @@ public class User extends BaseActivity
             });
         }
         fragmentManager.beginTransaction().replace(R.id.fragment, userInfo).commit();
-
-        //subscribeSteps();
-
     }
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -205,7 +172,6 @@ public class User extends BaseActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.user, menu);
         return true;
     }
@@ -219,7 +185,7 @@ public class User extends BaseActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-            mAuth.signOut();
+            dao.signOut();
             finish();
             return true;
         }
@@ -280,18 +246,16 @@ public class User extends BaseActivity
 
         }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
 
     private void filler() {
-        FirebaseUser currentUser = mAuth.getCurrentUser();
+        FirebaseUser currentUser = dao.getCurrentUser();
         DocumentReference docRef = null;
 
         if (currentUser != null) {
-            // OLD
-            // docRef = db.collection("users").document(currentUser.getUid());
             docRef = dao.getUserDocument(currentUser.getUid());
             docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                 @Override
@@ -301,16 +265,15 @@ public class User extends BaseActivity
                         if (document != null && document.exists()) {
                             Map<String, Object> map = document.getData();
                             if (map != null) {
-                                if (map.get(dbPhone) != null) {
-                                    nav_phone.setText(map.get(dbPhone).toString());
+                                if (map.get(DAO.dbPhone) != null) {
+                                    nav_phone.setText(map.get(DAO.dbPhone).toString());
                                 }
                             }
-                            Log.d(TAG, "DocumentSnapshot data: " + document.getData());
                         } else {
-                            Log.d(TAG, "No such document");
+                            Toast.makeText(User.this, "User document not found!", Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        Log.d(TAG, "get failed with ", task.getException());
+                        Toast.makeText(User.this, "Error in getting user document!", Toast.LENGTH_SHORT).show();
                     }
                 }
             });
@@ -334,40 +297,32 @@ public class User extends BaseActivity
                             latitude = location.getLatitude();
                             longitude = location.getLongitude();
                             dbUpdate();
-                            //Toast.makeText(getApplication().getBaseContext(),Double.toString(latitude),Toast.LENGTH_LONG).show();
                         }
                     }
                 });
     }
 
     private void dbUpdate(){
-        FirebaseUser currentUser = mAuth.getCurrentUser();
+        FirebaseUser currentUser = dao.getCurrentUser();
         if (currentUser != null) {
             Map<String, Object> user = new HashMap<>();
             user.put("Latitude", latitude);
             user.put("Longitude",longitude);
-            // OLD
-            // db.collection("users").document(currentUser.getUid()).update(user)
             dao.getUserDocument(currentUser.getUid()).update(user)
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
-                            //phoneNumberNavigator.setText(phoneNumber.getText().toString());
-                            // Log.d(TAG, "DocumentSnapshot successfully written!");
+                            Toast.makeText(User.this, "User updated successfully!", Toast.LENGTH_SHORT).show();
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
-                            //Log.w(TAG, "Error writing document", e);
+                            Toast.makeText(User.this, "Error in user updating!\n" + e.toString(), Toast.LENGTH_SHORT).show();
                         }
                     });
         }
-
-
     }
-
-    //NEW SECTION
 
     private void subscribeSteps(){
         if(GoogleSignIn.getLastSignedInAccount(this)!=null) {
@@ -376,13 +331,13 @@ public class User extends BaseActivity
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
-                            Log.i(TAG, "Successfully subscribed!");
+                            Toast.makeText(User.this, "Successfully subscribed!", Toast.LENGTH_SHORT).show();
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
-                            Log.i(TAG, "There was a problem subscribing.");
+                            Toast.makeText(User.this, "There was a problem subscribing.", Toast.LENGTH_SHORT).show();
                         }
                     });
             Fitness.getRecordingClient(this, GoogleSignIn.getLastSignedInAccount(this))
@@ -392,32 +347,12 @@ public class User extends BaseActivity
                         public void onSuccess(List<Subscription> subscriptions) {
                             for (Subscription sc : subscriptions) {
                                 DataType dt = sc.getDataType();
-                                Log.i(TAG, "Active subscription for data type: " + dt.getName());
                             }
                         }
                     });
         }
     }
-
-    private void unsubscribeSteps(){
-        Fitness.getRecordingClient(this, GoogleSignIn.getLastSignedInAccount(this))
-                .unsubscribe(TYPE_STEP_COUNT_DELTA)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.i(TAG, "Successfully unsubscribed for data type: " );
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        // Subscription not removed
-                        Log.i(TAG, "Failed to unsubscribe for data type: " );
-                    }
-                });
-
-    }
-    public void weeklyTotal() {
+    public void dataReader() {
         readData();
     }
 
@@ -429,12 +364,12 @@ public class User extends BaseActivity
                 .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ_WRITE))
                 .addConnectionCallbacks(
                         new GoogleApiClient.ConnectionCallbacks() {
-
                             @Override
                             public void onConnected(Bundle bundle) {
                                 Log.i(TAG, "Connected!!!");
                                 // Now you can make calls to the Fitness APIs.  What to do?
                                 // Subscribe to some data sources!
+
 
                                 subscribeSteps();
                             }
@@ -444,9 +379,9 @@ public class User extends BaseActivity
                                 // If your connection to the sensor gets lost at some point,
                                 // you'll be able to determine the reason and react to it here.
                                 if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_NETWORK_LOST) {
-                                    Log.w(TAG, "Connection lost.  Cause: Network Lost.");
+                                    Toast.makeText(User.this, "Connection lost.  Cause: Network Lost.", Toast.LENGTH_SHORT).show();
                                 } else if (i == GoogleApiClient.ConnectionCallbacks.CAUSE_SERVICE_DISCONNECTED) {
-                                    Log.w(TAG, "Connection lost.  Reason: Service Disconnected");
+                                    Toast.makeText(User.this, "Connection lost.  Reason: Service Disconnected", Toast.LENGTH_SHORT).show();
                                 }
                             }
                         }
@@ -459,16 +394,10 @@ public class User extends BaseActivity
                     }
                 })
                 .build();
-
-        //MyGoogleApiClient_Singleton.getInstance(mClient);
-
     }
 
     private class VerifyDataTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
-
-            Log.i(TAG, "step count");
-
             total = 0;
 
             PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal(mClient, DataType.TYPE_STEP_COUNT_DELTA);
@@ -478,17 +407,9 @@ public class User extends BaseActivity
                 total = Objects.requireNonNull(totalSet).isEmpty()
                         ? 0
                         : totalSet.getDataPoints().get(0).getValue(Field.FIELD_STEPS).asInt();
-            } else {
-                Log.w(TAG, "There was a problem getting the step count.");
             }
-
-            Log.i(TAG, "Total steps: " + total);
-
-
-
             return null;
         }
-
     }
 
     private void readData() {
@@ -498,39 +419,38 @@ public class User extends BaseActivity
     private void passStepData(FitnessLevel fitnessLevel){
         Bundle bundle=new Bundle();
         bundle.putInt("steps", total);
-        bundle.putString(dbWeight,weight);
-        bundle.putString(dbHeight,height);
-        //set Fragmentclass Arguments
+        bundle.putString(DAO.dbWeight,weight);
+        bundle.putString(DAO.dbHeight,height);
         fitnessLevel.setArguments(bundle);
     }
     private void passerUI(final UserInfo userInfo){
         Bundle bundle=new Bundle();
-        bundle.putString(dbCF, Objects.requireNonNull(cf));
-        bundle.putString(dbday, Objects.requireNonNull(day));
-        bundle.putString(dbMonth, Objects.requireNonNull(month));
-        bundle.putString(dbYear, Objects.requireNonNull(year));
-        bundle.putString(dbGender, Objects.requireNonNull(gender));
-        bundle.putString(dbPhone, Objects.requireNonNull(phoneNumber));
-        bundle.putString(dbLastName, Objects.requireNonNull(lastName));
-        bundle.putString(dbName, Objects.requireNonNull(name));
+        bundle.putString(DAO.dbCF, Objects.requireNonNull(cf));
+        bundle.putString(DAO.dbDay, Objects.requireNonNull(day));
+        bundle.putString(DAO.dbMonth, Objects.requireNonNull(month));
+        bundle.putString(DAO.dbYear, Objects.requireNonNull(year));
+        bundle.putString(DAO.dbGender, Objects.requireNonNull(gender));
+        bundle.putString(DAO.dbPhone, Objects.requireNonNull(phoneNumber));
+        bundle.putString(DAO.dbLastName, Objects.requireNonNull(lastName));
+        bundle.putString(DAO.dbName, Objects.requireNonNull(name));
         bundle.putString("Type",Objects.requireNonNull(type));
         userInfo.setArguments(bundle);
     }
     private void passerName(final SingleRequest userInfo){
         Bundle bundle=new Bundle();
-        bundle.putString(dbName, Objects.requireNonNull(name));
+        bundle.putString(DAO.dbName, Objects.requireNonNull(name));
         userInfo.setArguments(bundle);
     }
     private void passerCF(final Requests userInfo){
         Bundle bundle=new Bundle();
-        bundle.putString(dbCF, Objects.requireNonNull(cf));
-        bundle.putString(dbday, Objects.requireNonNull(day));
-        bundle.putString(dbMonth, Objects.requireNonNull(month));
-        bundle.putString(dbYear, Objects.requireNonNull(year));
-        bundle.putString(dbGender, Objects.requireNonNull(gender));
-        bundle.putString(dbPhone, Objects.requireNonNull(phoneNumber));
-        bundle.putString(dbLastName, Objects.requireNonNull(lastName));
-        bundle.putString(dbName, Objects.requireNonNull(name));
+        bundle.putString(DAO.dbCF, Objects.requireNonNull(cf));
+        bundle.putString(DAO.dbDay, Objects.requireNonNull(day));
+        bundle.putString(DAO.dbMonth, Objects.requireNonNull(month));
+        bundle.putString(DAO.dbYear, Objects.requireNonNull(year));
+        bundle.putString(DAO.dbGender, Objects.requireNonNull(gender));
+        bundle.putString(DAO.dbPhone, Objects.requireNonNull(phoneNumber));
+        bundle.putString(DAO.dbLastName, Objects.requireNonNull(lastName));
+        bundle.putString(DAO.dbName, Objects.requireNonNull(name));
         userInfo.setArguments(bundle);
     }
     //SETTERS
@@ -577,15 +497,5 @@ public class User extends BaseActivity
     public void setType(String type) {
         this.type = type;
     }
-
-
-
-
-//    private void setUI(UserInfo userInfo){
-//        userInfo.setArguments(bundle);
-//    }
-
-
-
 
 }

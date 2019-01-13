@@ -11,8 +11,11 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -27,8 +30,6 @@ import static android.content.ContentValues.TAG;
  */
 public class PastRequests extends BaseFragment {
 
-    // private FirebaseAuth mAuth;
-    // private FirebaseFirestore db;
     private TextView name;
     private TextView lastName;
     private TextView phone;
@@ -43,17 +44,10 @@ public class PastRequests extends BaseFragment {
     private boolean first = true;
     private boolean accepted = false;
 
-    public PastRequests() {
-        // Required empty public constructor
-    }
-
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        // db = FirebaseFirestore.getInstance();
-        // mAuth = FirebaseAuth.getInstance();
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
         name = view.findViewById(R.id.userName);
         lastName = view.findViewById(R.id.userLastName);
@@ -68,7 +62,6 @@ public class PastRequests extends BaseFragment {
         bmi = view.findViewById(R.id.userBMI);
         buttonClick();
 
-
         return view;
     }
 
@@ -77,32 +70,32 @@ public class PastRequests extends BaseFragment {
             @Override
             public void onClick(View v) {
                if(!cf.getText().toString().equals("")){
-                    // OLD
-                    //  db.collection("requests")
-                    //          //TODO ocio qua cambia il CF
-                    //          .whereEqualTo("UserID",mAuth.getUid())
-                    //          .get()
                     dao.getCurrentUserRequest()
                            .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                                @Override
                                public void onComplete(@NonNull Task<QuerySnapshot> task) {
                                    if (task.isSuccessful()) {
                                        for (QueryDocumentSnapshot document : task.getResult()) {
-                                           if (document.get("ApprovalStatus").toString().equals("Accepted")&&document.get("CF").toString().equals(cf.getText().toString())&&document.get("UserID").toString().equals(dao.getCurrentUser().getUid())) {
-                                               Log.d(TAG, document.getId() + " => " + document.getData());
+                                           if (document.get("ApprovalStatus").toString().equals("Accepted")&&document.get("CF").toString().equals(cf.getText().toString().toUpperCase())&&document.get("UserID").toString().equals(dao.getCurrentUser().getUid())) {
                                                accepted = true;
                                                if(document.get("Subscribe").toString().equals("false")){
-                                                   DBRequestHandler dbRequestHandler = new DBRequestHandler();
-                                                   dbRequestHandler.updateRequestsDB("ApprovalStatus","Pending",document.getId());
+                                                   dao.updateRequestsDB("ApprovalStatus","Pending",document.getId())
+                                                           .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                               @Override
+                                                               public void onSuccess(Void aVoid) {
+                                                               }
+                                                           })
+                                                           .addOnFailureListener(new OnFailureListener() {
+                                                               @Override
+                                                               public void onFailure(@NonNull Exception e) {
+                                                                   Toast.makeText(getActivity(), "Error in request!", Toast.LENGTH_SHORT).show();
+                                                               }
+                                                           });
 
                                                }
                                            }
                                            if(accepted) {
-                                               // OLD
-                                               // db.collection("users")
-                                               //         .whereEqualTo("CF", cf.getText().toString())
-                                               //         .get()
-                                               dao.getUserByCf(cf.getText().toString())
+                                               dao.getUserByCf(cf.getText().toString().toUpperCase())
                                                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                                                            @Override
                                                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
@@ -126,14 +119,14 @@ public class PastRequests extends BaseFragment {
                                                                    first = true;
                                                                    accepted = false;
                                                                } else {
-                                                                   Log.d(TAG, "Error getting documents: ", task.getException());
+                                                                   Toast.makeText(getActivity(), "Error while querying user info!\n" + task.getException(), Toast.LENGTH_SHORT).show();
                                                                }
                                                            }
                                                        });
                                            }
                                        }
                                    } else {
-                                       Log.d(TAG, "Error getting documents: ", task.getException());
+                                       Toast.makeText(getActivity(), "Error while querying the request!\n" + task.getException(), Toast.LENGTH_SHORT).show();
                                    }
                                }
                            });

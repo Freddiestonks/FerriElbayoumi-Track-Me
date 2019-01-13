@@ -19,7 +19,6 @@ import com.google.firebase.auth.FirebaseUser;
 
 public class LogInActivity extends BaseActivity {
 
-    // private FirebaseAuth mAuth;
     private static final String TAG = "LoginActivity";
     private EditText emailField;
     private EditText passwordField;
@@ -29,12 +28,10 @@ public class LogInActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log_in);
-        // mAuth = FirebaseAuth.getInstance();
         emailField = findViewById(R.id.emailField);
         passwordField = findViewById(R.id.passwordField);
         loginButton = findViewById(R.id.loginButton);
         loginButtonUpListener();
-
     }
 
     public void loginButtonUpListener(){
@@ -58,18 +55,14 @@ public class LogInActivity extends BaseActivity {
                         if (task.isSuccessful()) {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInWithEmail:success");
-                            // FirebaseUser user = mAuth.getCurrentUser();
-                            FirebaseUser user = dao.getCurrentUser();
+                            Toast.makeText(LogInActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
                             launchActivity(User.class);
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInWithEmail:failure", task.getException());
                             Toast.makeText(LogInActivity.this, "Authentication failed.",
                                     Toast.LENGTH_SHORT).show();
-                            //updateUI(null);
                         }
-
-                        // ...
                     }
                 });
     }

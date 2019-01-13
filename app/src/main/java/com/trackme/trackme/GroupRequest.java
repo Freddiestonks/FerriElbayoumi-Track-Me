@@ -14,17 +14,15 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -38,8 +36,6 @@ import static android.content.ContentValues.TAG;
  */
 public class GroupRequest extends BaseFragment {
 
-    // private FirebaseFirestore db;
-    // private FirebaseAuth mAuth;
     private Button search;
     private EditText address;
     private EditText range;
@@ -60,23 +56,16 @@ public class GroupRequest extends BaseFragment {
     private int averageWeight = 0;
     private int averageHeight = 0;
     private int averageSteps = 0;
-    private double averageBMI = 0.0;
     private int averageAge = 0;
     private int male = 0;
     private int female = 0;
     private int people;
-    public GroupRequest() {
-        // Required empty public constructor
-    }
 
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_group_request, container, false);
-        // mAuth = FirebaseAuth.getInstance();
-        // db = FirebaseFirestore.getInstance();
         search = view.findViewById(R.id.groupSearchButton);
         range = view.findViewById(R.id.radius);
         address = view.findViewById(R.id.streetAddress);
@@ -94,7 +83,6 @@ public class GroupRequest extends BaseFragment {
     }
 
     private LatLng getLocationFromAddress(Context context, String strAddress) {
-
         Geocoder coder = new Geocoder(context);
         List<Address> address;
         LatLng p1 = null;
@@ -108,9 +96,7 @@ public class GroupRequest extends BaseFragment {
 
             Address location = address.get(0);
             p1 = new LatLng(location.getLatitude(), location.getLongitude() );
-
         } catch (IOException ex) {
-
             ex.printStackTrace();
         }
 
@@ -158,54 +144,46 @@ public class GroupRequest extends BaseFragment {
 
 
     public void getDBAverageWeight(int max_age, int min_age, final LatLng max, final LatLng min){
-        // FirebaseUser currentUser = mAuth.getCurrentUser();
         FirebaseUser currentUser = dao.getCurrentUser();
-        DocumentReference docRef;
         averageWeight = 0;
         averageHeight = 0;
         averageSteps = 0;
-        averageBMI = 0.0;
         averageAge = 0;
         people = 0;
         male = 0;
         female = 0;
-        final ArrayList<Integer> weight = new ArrayList<Integer>();
-        final ArrayList<Integer> height = new ArrayList<Integer>();
-        final ArrayList<Integer> steps = new ArrayList<Integer>();
-        final ArrayList<Integer> age = new ArrayList<Integer>();
+        final ArrayList<Integer> weight = new ArrayList<>();
+        final ArrayList<Integer> height = new ArrayList<>();
+        final ArrayList<Integer> steps = new ArrayList<>();
+        final ArrayList<Integer> age = new ArrayList<>();
         if(currentUser!=null) {
-            // OLD
-//            db.collection("users")
-//                    .whereLessThanOrEqualTo("Year",Calendar.getInstance().get(Calendar.YEAR)-min_age)
-//                    .whereGreaterThanOrEqualTo("Year",Calendar.getInstance().get(Calendar.YEAR)-max_age-1)
-//                    .get()
             dao.getUsersWithAgeRange(max_age, min_age)
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if (task.isSuccessful()) {
                             for (QueryDocumentSnapshot document : task.getResult()) {
-                                Double latitude = Double.parseDouble(document.getData().get("Latitude").toString());
-                                Double longitude = Double.parseDouble(document.getData().get("Longitude").toString());
+                                Double latitude = Double.parseDouble(document.getData().get(DAO.dbLatitude).toString());
+                                Double longitude = Double.parseDouble(document.getData().get(DAO.dbLongitude).toString());
                                 Log.d(TAG, document.getId() + " => " + document.getData());
                                 if(latitude>=min.latitude && latitude<=max.latitude&& longitude>=min.longitude&&longitude<=max.longitude) {
                                     people++;
-                                    if (!document.getData().get("Weight").toString().equals("")) {
-                                        weight.add(Integer.parseInt(document.getData().get("Weight").toString()));
+                                    if (!document.getData().get(DAO.dbWeight).toString().equals("")) {
+                                        weight.add(Integer.parseInt(document.getData().get(DAO.dbWeight).toString()));
                                     }
-                                    if (!document.getData().get("Height").toString().equals("")) {
-                                        height.add(Integer.parseInt(document.getData().get("Height").toString()));
+                                    if (!document.getData().get(DAO.dbHeight).toString().equals("")) {
+                                        height.add(Integer.parseInt(document.getData().get(DAO.dbHeight).toString()));
                                     }
-                                    if (!document.getData().get("Steps").toString().equals("")) {
-                                        steps.add(Integer.parseInt(document.getData().get("Steps").toString()));
+                                    if (!document.getData().get(DAO.dbSteps).toString().equals("")) {
+                                        steps.add(Integer.parseInt(document.getData().get(DAO.dbSteps).toString()));
                                     }
-                                    if (!document.getData().get("Year").toString().equals("")) {
-                                        age.add(Calendar.getInstance().get(Calendar.YEAR) - Integer.parseInt(document.getData().get("Year").toString()));
+                                    if (!document.getData().get(DAO.dbYear).toString().equals("")) {
+                                        age.add(Calendar.getInstance().get(Calendar.YEAR) - Integer.parseInt(document.getData().get(DAO.dbYear).toString()));
                                     }
-                                    if (document.getData().get("Gender").toString().equals("Male")) {
+                                    if (document.getData().get(DAO.dbGender).toString().equals(DAO.dbMale)) {
                                         male++;
                                     }
-                                    if (document.getData().get("Gender").toString().equals("Female")) {
+                                    if (document.getData().get(DAO.dbGender).toString().equals(DAO.dbFemale)) {
                                         female++;
                                     }
                                 }
@@ -240,7 +218,8 @@ public class GroupRequest extends BaseFragment {
 
 
                         } else {
-                            Log.d(TAG, "Error getting documents: ", task.getException());
+                            Log.d(TAG, "Error getting users!\n", task.getException());
+                            Toast.makeText(getActivity(), "Error getting users!\n" + task.getException(), Toast.LENGTH_SHORT).show();
                         }
                     }
                 });

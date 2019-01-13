@@ -10,8 +10,11 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseUser;
@@ -24,7 +27,6 @@ public class MainActivity extends BaseActivity {
     private EditText confirmPassword;
     private TextView message;
     private TextView click;
-    // private FirebaseAuth mAuth;
     private CheckBox businessType;
     private static final String TAG = "MainActivity";
 
@@ -32,7 +34,6 @@ public class MainActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        // mAuth = FirebaseAuth.getInstance();
         click = findViewById(R.id.Click);
         signUp = findViewById(R.id.signUp);
         signUp.setText(signUpText);
@@ -49,7 +50,6 @@ public class MainActivity extends BaseActivity {
     public void onStart() {
         super.onStart();
         // Check if user is signed in (non-null) and update UI accordingly.
-        // FirebaseUser currentUser = mAuth.getCurrentUser();
         FirebaseUser currentUser = dao.getCurrentUser();
         if(currentUser != null){
         launchActivity(User.class); }
@@ -108,7 +108,6 @@ public class MainActivity extends BaseActivity {
         return email.getText().toString();
     }
     private void createNewUser(String inputEmail, String inputPassword){
-        // mAuth.createUserWithEmailAndPassword(inputEmail, inputPassword)
         dao.createUserWithEmailAndPassword(inputEmail, inputPassword)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -116,13 +115,30 @@ public class MainActivity extends BaseActivity {
                         if (task.isSuccessful()) {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "createUserWithEmail:success");
-                            // FirebaseUser user = mAuth.getCurrentUser();
                             FirebaseUser user = dao.getCurrentUser();
                             if (user!=null) {
                                 message.setText("Congratulations, you have registered!");
                                 message.setTextColor(Color.GREEN);
-                                DBRequestHandler dbRequestHandler = new DBRequestHandler();
-                                dbRequestHandler.generateNewUser(businessType.isChecked());
+
+                                if (dao.getCurrentUser() != null) {
+                                    dao.generateNewUser(businessType.isChecked())
+                                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                @Override
+                                                public void onSuccess(Void aVoid) {
+                                                    //phoneNumberNavigator.setText(phoneNumber.getText().toString());
+                                                    // Log.d(TAG, "DocumentSnapshot successfully written!");
+                                                    Toast.makeText(MainActivity.this, "User created successfully!", Toast.LENGTH_SHORT).show();
+                                                }
+                                            })
+                                            .addOnFailureListener(new OnFailureListener() {
+                                                @Override
+                                                public void onFailure(@NonNull Exception e) {
+                                                    //Log.w(TAG, "Error writing document", e);
+                                                    Toast.makeText(MainActivity.this, "Error in user creation!\n" + e.toString(), Toast.LENGTH_SHORT).show();
+                                                }
+                                            });
+                                }
+
                                 launchActivity(User.class);
                             }
 
@@ -133,12 +149,8 @@ public class MainActivity extends BaseActivity {
                             message.setTextColor(Color.RED);
 
                             Log.w(TAG, "createUserWithEmail:failure", task.getException());
-//                            Toast.makeText(EmailPasswordActivity.this, "Authentication failed.",
-//                                    Toast.LENGTH_SHORT).show();
-                            //updateUI(null);
+                            Toast.makeText(MainActivity.this, "Error in user creation!\n" + task.getException(), Toast.LENGTH_SHORT).show();
                         }
-
-                        // ...
                     }
                 });
 

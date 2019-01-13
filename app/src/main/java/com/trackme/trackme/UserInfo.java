@@ -13,6 +13,7 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -36,8 +37,6 @@ import static android.content.ContentValues.TAG;
  */
 public class UserInfo extends BaseFragment {
 
-    private FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private FirebaseAuth mAuth;
     private Button update_info;
     private EditText cf;
     private EditText phoneNumber;
@@ -50,34 +49,13 @@ public class UserInfo extends BaseFragment {
     private RadioButton male;
     private RadioButton female;
     private TextView date;
-    private String type;
     int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-    private final static String dbLastName = "Last Name";
-    private final static String dbCF = "CF";
-    private final static String dbName = "Name";
-    private final static String dbPhone = "Phone Number";
-    private final static String dbYear = "Year";
-    private final static String dbMonth = "Month";
-    private final static String dbday = "Day";
-    private final static String dbGender = "Gender";
-    private final static String dbMale = "Male";
-    private final static String dbFemale = "Female";
-    private final static String dbWeight = "Weight";
-    private final static String dbHeight = "Height";
-
-
-
-
-    public UserInfo() {
-        // Required empty public constructor
-    }
 
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_user_info, container, false);
         // Inflate the layout for this fragment
-        mAuth = FirebaseAuth.getInstance();
         update_info = view.findViewById(R.id.update_info);
         cf = view.findViewById(R.id.CF);
         phoneNumber = view.findViewById(R.id.phone_number);
@@ -90,8 +68,6 @@ public class UserInfo extends BaseFragment {
         male = view.findViewById(R.id.male);
         female = view.findViewById(R.id.female);
         date = view.findViewById(R.id.textViewUI);
-        //cf.setText(getArguments().getString(dbCF));
-        //honeNumber.setText(getArguments().getString(dbPhone));
         buttonClick();
         setter();
         filler();
@@ -100,13 +76,13 @@ public class UserInfo extends BaseFragment {
 
     private void setter(){
         if (getArguments() != null){
-            cf.setText(getArguments().getString(dbCF));
-            day.setText(getArguments().getString(dbday));
-            month.setText(getArguments().getString(dbMonth));
-            year.setText(getArguments().getString(dbYear));
-            name.setText(getArguments().getString(dbName));
-            lastName.setText(getArguments().getString(dbLastName));
-            phoneNumber.setText(getArguments().getString(dbPhone));
+            cf.setText(getArguments().getString(DAO.dbCF));
+            day.setText(getArguments().getString(DAO.dbDay));
+            month.setText(getArguments().getString(DAO.dbMonth));
+            year.setText(getArguments().getString(DAO.dbYear));
+            name.setText(getArguments().getString(DAO.dbName));
+            lastName.setText(getArguments().getString(DAO.dbLastName));
+            phoneNumber.setText(getArguments().getString(DAO.dbPhone));
             if(getArguments().getString("Type").equals("Business")) {
                 day.setVisibility(View.INVISIBLE);
                 month.setVisibility(View.INVISIBLE);
@@ -115,12 +91,12 @@ public class UserInfo extends BaseFragment {
                 gender.setVisibility(View.INVISIBLE);
                 lastName.setVisibility(View.INVISIBLE);
             }
-            String gen = getArguments().getString(dbGender);
-            if (gen.equals(dbMale)){
+            String gen = getArguments().getString(DAO.dbGender);
+            if (gen.equals(DAO.dbMale)){
                 male.setChecked(true);
                 female.setChecked(false);
             }
-            else if(gen.equals(dbFemale)){
+            else if(gen.equals(DAO.dbFemale)){
                 male.setChecked(false);
                 female.setChecked(true);}
             else {
@@ -132,11 +108,11 @@ public class UserInfo extends BaseFragment {
     }
 
     private void filler(){
-        FirebaseUser currentUser = mAuth.getCurrentUser();
+        FirebaseUser currentUser = dao.getCurrentUser();
         DocumentReference docRef;
 
         if(currentUser!=null) {
-            docRef = db.collection("users").document(currentUser.getUid());
+            docRef = dao.getUserDocument(currentUser.getUid());
                 docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<DocumentSnapshot> task) {
@@ -145,16 +121,15 @@ public class UserInfo extends BaseFragment {
                             if (document!= null && document.exists()) {
                                 Map<String,Object> map = document.getData();
                                 if(map != null) {
-                                    if(map.get(dbCF) != null){
-                                        cf.setText(map.get(dbCF).toString());
-                                        //TODO FIX NULL POINTER
+                                    if(map.get(DAO.dbCF) != null){
+                                        cf.setText(map.get(DAO.dbCF).toString());
                                         if (getActivity() != null)
-                                            ((User) getActivity()).setCf(map.get(dbCF).toString());
+                                            ((User) getActivity()).setCf(map.get(DAO.dbCF).toString());
                                     }
-                                    if(map.get(dbLastName) != null){
-                                        lastName.setText(map.get(dbLastName).toString());
+                                    if(map.get(DAO.dbLastName) != null){
+                                        lastName.setText(map.get(DAO.dbLastName).toString());
                                         if (getActivity() != null)
-                                            ((User) getActivity()).setLastName(map.get(dbLastName).toString());
+                                            ((User) getActivity()).setLastName(map.get(DAO.dbLastName).toString());
 
                                     }
                                     if(map.get("Type") != null){
@@ -171,47 +146,41 @@ public class UserInfo extends BaseFragment {
 
 
                                     }
-                                    if(map.get(dbName) != null){
-                                        name.setText(map.get(dbName).toString());
+                                    if(map.get(DAO.dbName) != null){
+                                        name.setText(map.get(DAO.dbName).toString());
                                         if (getActivity() != null)
-                                            ((User) getActivity()).setName(map.get(dbName).toString());
+                                            ((User) getActivity()).setName(map.get(DAO.dbName).toString());
 
                                     }
-                                    if(map.get(dbPhone) != null){
-                                        phoneNumber.setText(map.get(dbPhone).toString());
+                                    if(map.get(DAO.dbPhone) != null){
+                                        phoneNumber.setText(map.get(DAO.dbPhone).toString());
                                         if (getActivity() != null)
-                                            ((User) getActivity()).setPhoneNumber(map.get(dbPhone).toString());
-
-                                        // phoneNumberNavigator.setText(map.get(dbPhone).toString());
+                                            ((User) getActivity()).setPhoneNumber(map.get(DAO.dbPhone).toString());
                                     }
-                                    if(map.get(dbday) != null){
-                                        day.setText(map.get(dbday).toString());
+                                    if(map.get(DAO.dbDay) != null){
+                                        day.setText(map.get(DAO.dbDay).toString());
                                         if (getActivity() != null)
-                                            ((User) getActivity()).setDay(map.get(dbday).toString());
-
-                                        // phoneNumberNavigator.setText(map.get(dbPhone).toString());
+                                            ((User) getActivity()).setDay(map.get(DAO.dbDay).toString());
                                     }
-                                    if(map.get(dbYear) != null){
-                                        year.setText(map.get(dbYear).toString());
+                                    if(map.get(DAO.dbYear) != null){
+                                        year.setText(map.get(DAO.dbYear).toString());
                                         if (getActivity() != null)
-                                            ((User) getActivity()).setYear(map.get(dbYear).toString());
-
-                                        // phoneNumberNavigator.setText(map.get(dbPhone).toString());
+                                            ((User) getActivity()).setYear(map.get(DAO.dbYear).toString());
                                     }
-                                    if(map.get(dbMonth) != null){
-                                        month.setText(map.get(dbMonth).toString());
+                                    if(map.get(DAO.dbMonth) != null){
+                                        month.setText(map.get(DAO.dbMonth).toString());
                                         if (getActivity() != null)
-                                            ((User) getActivity()).setMonth(map.get(dbMonth).toString());
+                                            ((User) getActivity()).setMonth(map.get(DAO.dbMonth).toString());
                                     }
-                                    if(map.get(dbGender) != null){
-                                        String gen = map.get(dbGender).toString();
+                                    if(map.get(DAO.dbGender) != null){
+                                        String gen = map.get(DAO.dbGender).toString();
                                         if (getActivity() != null)
-                                            ((User) getActivity()).setGender(map.get(dbGender).toString());
-                                        if (gen.equals(dbMale)){
+                                            ((User) getActivity()).setGender(map.get(DAO.dbGender).toString());
+                                        if (gen.equals(DAO.dbMale)){
                                             male.setChecked(true);
                                             female.setChecked(false);
                                         }
-                                        else if(gen.equals(dbFemale)){
+                                        else if(gen.equals(DAO.dbFemale)){
                                             male.setChecked(false);
                                             female.setChecked(true);}
                                             else {
@@ -219,25 +188,20 @@ public class UserInfo extends BaseFragment {
                                             female.setChecked(false);
                                         }
                                     }
-                                    if(map.get(dbWeight) != null){
+                                    if(map.get(DAO.dbWeight) != null){
                                         if (getActivity() != null)
-                                            ((User) getActivity()).setWeight(map.get(dbWeight).toString());
-
-                                        // phoneNumberNavigator.setText(map.get(dbPhone).toString());
+                                            ((User) getActivity()).setWeight(map.get(DAO.dbWeight).toString());
                                     }
-                                    if(map.get(dbHeight) != null){
+                                    if(map.get(DAO.dbHeight) != null){
                                         if (getActivity() != null)
-                                            ((User) getActivity()).setHeight(map.get(dbHeight).toString());
-
-                                        // phoneNumberNavigator.setText(map.get(dbPhone).toString());
+                                            ((User) getActivity()).setHeight(map.get(DAO.dbHeight).toString());
                                     }
                                 }
-                                Log.d(TAG, "DocumentSnapshot data: " + document.getData());
                             } else {
-                                Log.d(TAG, "No such document");
+                                Toast.makeText(getActivity(), "Document not found!", Toast.LENGTH_SHORT).show();
                             }
                         } else {
-                            Log.d(TAG, "get failed with ", task.getException());
+                            Toast.makeText(getActivity(), "Error in getting user document!\n" + task.getException(), Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -250,42 +214,40 @@ public class UserInfo extends BaseFragment {
         update_info.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FirebaseUser currentUser = mAuth.getCurrentUser();
+                FirebaseUser currentUser = dao.getCurrentUser();
                 if (currentUser != null) {
                     Map<String, Object> user = new HashMap<>();
-                    user.put(dbCF, cf.getText().toString());
-                    user.put(dbName, name.getText().toString());
-                    user.put(dbLastName, lastName.getText().toString());
-                    user.put(dbPhone, phoneNumber.getText().toString());
+                    user.put(DAO.dbCF, cf.getText().toString().toUpperCase());
+                    user.put(DAO.dbName, name.getText().toString());
+                    user.put(DAO.dbLastName, lastName.getText().toString());
+                    user.put(DAO.dbPhone, phoneNumber.getText().toString());
                     if((!day.getText().toString().equals(""))&&( 1 <= Integer.parseInt(day.getText().toString()))&&(Integer.parseInt(day.getText().toString())<=31)){
-                        user.put(dbday, Integer.parseInt(day.getText().toString()));
+                        user.put(DAO.dbDay, Integer.parseInt(day.getText().toString()));
                     }
                     if((!month.getText().toString().equals("")) && (1 <= Integer.parseInt(month.getText().toString())) && (Integer.parseInt(month.getText().toString()) <= 12)){
-                        user.put(dbMonth, Integer.parseInt(month.getText().toString()));
+                        user.put(DAO.dbMonth, Integer.parseInt(month.getText().toString()));
                     }
                     if( (!year.getText().toString().equals(""))&&1900 <= Integer.parseInt(year.getText().toString())&&Integer.parseInt(year.getText().toString())<=currentYear){
-                        user.put(dbYear, Integer.parseInt(year.getText().toString()));
+                        user.put(DAO.dbYear, Integer.parseInt(year.getText().toString()));
                     }
                     if(gender.getCheckedRadioButtonId() == male.getId()){
-                        user.put(dbGender, dbMale);
+                        user.put(DAO.dbGender, DAO.dbMale);
                     }
                     else if(gender.getCheckedRadioButtonId() == female.getId()){
-                        user.put(dbGender, dbFemale);
+                        user.put(DAO.dbGender, DAO.dbFemale);
                     }
 
-// Add a new document with a generated ID
-                    db.collection("users").document(currentUser.getUid()).update(user)
+                    dao.updateUserDB(currentUser.getUid(), user)
                             .addOnSuccessListener(new OnSuccessListener<Void>() {
                                 @Override
                                 public void onSuccess(Void aVoid) {
-                                    //phoneNumberNavigator.setText(phoneNumber.getText().toString());
-                                    // Log.d(TAG, "DocumentSnapshot successfully written!");
+                                    Toast.makeText(getActivity(), "User's info updated!", Toast.LENGTH_SHORT).show();
                                 }
                             })
                             .addOnFailureListener(new OnFailureListener() {
                                 @Override
                                 public void onFailure(@NonNull Exception e) {
-                                    //Log.w(TAG, "Error writing document", e);
+                                    Toast.makeText(getActivity(), "Error in updating user's info!\n" + e.toString(), Toast.LENGTH_SHORT).show();
                                 }
                             });
 //
