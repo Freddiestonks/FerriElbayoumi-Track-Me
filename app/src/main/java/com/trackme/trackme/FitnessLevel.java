@@ -15,23 +15,26 @@ import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Map;
 import java.util.Objects;
 
+import static android.content.ContentValues.TAG;
 import static java.text.DateFormat.getDateInstance;
 
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class FitnessLevel extends BaseFragment {
+public class FitnessLevel extends Fragment {
     private static final String TAG = "WE";
-    // private FirebaseFirestore db;
-    // private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
+    private FirebaseAuth mAuth;
     private DBRequestHandler mDBRequestHandler;
     private EditText weight;
     private EditText height;
@@ -58,8 +61,8 @@ public class FitnessLevel extends BaseFragment {
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_fitness_level, container, false);
-        // mAuth = FirebaseAuth.getInstance();
-        // db = FirebaseFirestore.getInstance();
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
         mDBRequestHandler = new DBRequestHandler();
         weight = view.findViewById(R.id.weight);
         height = view.findViewById(R.id.height);
@@ -79,13 +82,10 @@ public class FitnessLevel extends BaseFragment {
         return view;
     }
     private void filler(){
-        // FirebaseUser currentUser = mAuth.getCurrentUser();
-        FirebaseUser currentUser = dao.getCurrentUser();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
         DocumentReference docRef;
         if(currentUser!=null) {
-            // OLD
-            // docRef = db.collection("users").document(currentUser.getUid());
-            docRef = dao.getUserDocument(currentUser.getUid());
+            docRef = db.collection("users").document(currentUser.getUid());
             docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                 @Override
                 public void onComplete(@NonNull Task<DocumentSnapshot> task) {
@@ -159,9 +159,9 @@ public class FitnessLevel extends BaseFragment {
 
     private void updateStats(){
         if(!weight.getText().toString().equals("") && !height.getText().toString().equals("")) {
-            mDBRequestHandler.updateCurrentUserDB(dbHeight,Integer.parseInt(height.getText().toString()));
-            mDBRequestHandler.updateCurrentUserDB(mDBRequestHandler.getDbWeight(),Integer.parseInt(weight.getText().toString()));
-            mDBRequestHandler.updateCurrentUserDB(dbSteps,Integer.toString(daily_steps));
+            mDBRequestHandler.updateDB(dbHeight,Integer.parseInt(height.getText().toString()));
+            mDBRequestHandler.updateDB(mDBRequestHandler.getDbWeight(),Integer.parseInt(weight.getText().toString()));
+            mDBRequestHandler.updateDB(dbSteps,Integer.toString(daily_steps));
             bmi_calc = Float.parseFloat(weight.getText().toString()) * (10000) / (Float.parseFloat(height.getText().toString()) * Float.parseFloat(height.getText().toString()));
             bmi_calc = Math.round(bmi_calc * 100) / 100.0;
             bmi.setText(Double.toString(bmi_calc));
@@ -182,10 +182,17 @@ public class FitnessLevel extends BaseFragment {
                 hint.setText("Obese: You are currently obese!!! this means that you are eating way over what you should and are not taking enough nutrients,stop consuming junk food and start walking outside, our planet is wonderful,consult a physician for mor infos");
                 hint.setTextColor(Color.RED);
             }
-            mDBRequestHandler.updateCurrentUserDB(dbBmi,Double.toString(bmi_calc));
+            mDBRequestHandler.updateDB(dbBmi,Double.toString(bmi_calc));
 
             updateFitnessLevel();
         }
+    }
+
+    public double calculateBMI(Float weight,Float height){
+        double bmiCalc;
+        bmiCalc = weight * (10000) / (height*height);
+        return Math.round(bmiCalc * 100) / 100.0;
+
     }
 
 
