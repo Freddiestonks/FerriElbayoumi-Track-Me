@@ -168,22 +168,22 @@ public class GroupRequest extends BaseFragment {
                                 Log.d(TAG, document.getId() + " => " + document.getData());
                                 if(latitude>=min.latitude && latitude<=max.latitude&& longitude>=min.longitude&&longitude<=max.longitude) {
                                     people++;
-                                    if (!document.getData().get(DAO.dbWeight).toString().equals("")) {
+                                    if (document.getData().get(DAO.dbWeight)!=null&&!document.getData().get(DAO.dbWeight).toString().equals("")) {
                                         weight.add(Integer.parseInt(document.getData().get(DAO.dbWeight).toString()));
                                     }
-                                    if (!document.getData().get(DAO.dbHeight).toString().equals("")) {
+                                    if (document.getData().get(DAO.dbHeight)!= null &&!document.getData().get(DAO.dbHeight).toString().equals("")) {
                                         height.add(Integer.parseInt(document.getData().get(DAO.dbHeight).toString()));
                                     }
-                                    if (!document.getData().get(DAO.dbSteps).toString().equals("")) {
+                                    if (document.getData().get(DAO.dbSteps)!=null&&!document.getData().get(DAO.dbSteps).toString().equals("")) {
                                         steps.add(Integer.parseInt(document.getData().get(DAO.dbSteps).toString()));
                                     }
-                                    if (!document.getData().get(DAO.dbYear).toString().equals("")) {
+                                    if (document.getData().get(DAO.dbYear)!=null&&!document.getData().get(DAO.dbYear).toString().equals("")) {
                                         age.add(Calendar.getInstance().get(Calendar.YEAR) - Integer.parseInt(document.getData().get(DAO.dbYear).toString()));
                                     }
-                                    if (document.getData().get(DAO.dbGender).toString().equals(DAO.dbMale)) {
+                                    if (document.getData().get(DAO.dbGender)!=null&&document.getData().get(DAO.dbGender).toString().equals(DAO.dbMale)) {
                                         male++;
                                     }
-                                    if (document.getData().get(DAO.dbGender).toString().equals(DAO.dbFemale)) {
+                                    if (document.getData().get(DAO.dbSteps)!=null&&document.getData().get(DAO.dbGender).toString().equals(DAO.dbFemale)) {
                                         female++;
                                     }
                                 }

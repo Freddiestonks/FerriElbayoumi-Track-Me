@@ -57,7 +57,6 @@ public class DAO {
     }
     public Task getRequests(String cf) {
         return db.collection("requests")
-                //TODO ocio qua cambia il CF
                 .whereEqualTo("CF", cf)
                 .whereEqualTo("ApprovalStatus", "Pending")
                 .get();
@@ -100,6 +99,7 @@ public class DAO {
         Map<String, Object> user = new HashMap<>();
         user.put(dbCF,EMPTY_STRING);
         user.put(dbName, EMPTY_STRING);
+        user.put(dbSteps,EMPTY_STRING);
         user.put(dbLastName, EMPTY_STRING);
         user.put(dbPhone, EMPTY_STRING);
         user.put(dbDay, EMPTY_STRING);
