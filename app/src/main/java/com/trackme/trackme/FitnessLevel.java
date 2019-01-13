@@ -162,8 +162,7 @@ public class FitnessLevel extends Fragment {
             mDBRequestHandler.updateDB(dbHeight,Integer.parseInt(height.getText().toString()));
             mDBRequestHandler.updateDB(mDBRequestHandler.getDbWeight(),Integer.parseInt(weight.getText().toString()));
             mDBRequestHandler.updateDB(dbSteps,Integer.toString(daily_steps));
-            bmi_calc = Float.parseFloat(weight.getText().toString()) * (10000) / (Float.parseFloat(height.getText().toString()) * Float.parseFloat(height.getText().toString()));
-            bmi_calc = Math.round(bmi_calc * 100) / 100.0;
+            bmi_calc = calculateBMI(Float.parseFloat(weight.getText().toString()),(Float.parseFloat(height.getText().toString())));
             bmi.setText(Double.toString(bmi_calc));
             if (bmi_calc < 18.5) {
                 bmi.setTextColor(Color.BLUE);
@@ -186,6 +185,13 @@ public class FitnessLevel extends Fragment {
 
             updateFitnessLevel();
         }
+    }
+
+    public double calculateBMI(Float weight,Float height){
+        double bmiCalc;
+        bmiCalc = weight * (10000) / (height*height);
+        return Math.round(bmiCalc * 100) / 100.0;
+
     }
 
 

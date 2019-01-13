@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
         signUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(passwordSecurityChecker()){
+                if(passwordSecurityChecker(getPassword(),getConfirmPassword())){
                     createNewUser(getEmail(),getPassword());
                 }
 
@@ -84,9 +84,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private boolean passwordSecurityChecker(){
-        if(getPassword().equals(getConfirmPassword())){
-            if (getPassword().length() > 6){
+    public boolean passwordSecurityChecker(String password,String confirmation){
+        if(passwordIsEqual(password,confirmation)){
+            if (password.length() > 6){
                 return true;
             }
             else {
@@ -101,9 +101,14 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
     }
+
+    public boolean passwordIsEqual(String password1,String password2){
+        return password1.equals(password2);
+    }
     private String getPassword(){
         return password.getText().toString();
     }
+
     private String getConfirmPassword(){
         return confirmPassword.getText().toString();
     }
@@ -149,4 +154,9 @@ public class MainActivity extends AppCompatActivity {
         Intent newActivity = new Intent(this, activity);
         startActivity(newActivity);
     }
+
+    public Button getSignUp() {
+        return signUp;
+    }
+
 }

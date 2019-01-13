@@ -20,7 +20,13 @@ public class ExampleInstrumentedTest {
     public void useAppContext() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
-
         assertEquals("com.trackme.trackme", appContext.getPackageName());
     }
+    @Test
+    public void login() {
+        // Context of the app under test.
+        Context appContext = InstrumentationRegistry.getTargetContext();
+        assertEquals("com.trackme.trackme", appContext.getPackageName());
+    }
+
 }

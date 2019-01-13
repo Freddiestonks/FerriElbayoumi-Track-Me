@@ -363,31 +363,33 @@ public class User extends AppCompatActivity
     //NEW SECTION
 
     private void subscribeSteps(){
-        Fitness.getRecordingClient(this, Objects.requireNonNull(GoogleSignIn.getLastSignedInAccount(this)))
-                .subscribe(TYPE_STEP_COUNT_DELTA)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.i(TAG, "Successfully subscribed!");
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.i(TAG, "There was a problem subscribing.");
-                    }
-                });
-        Fitness.getRecordingClient(this, GoogleSignIn.getLastSignedInAccount(this))
-                .listSubscriptions(TYPE_STEP_COUNT_DELTA)
-                .addOnSuccessListener(new OnSuccessListener<List<Subscription>>() {
-                    @Override
-                    public void onSuccess(List<Subscription> subscriptions) {
-                        for (Subscription sc : subscriptions) {
-                            DataType dt = sc.getDataType();
-                            Log.i(TAG, "Active subscription for data type: " + dt.getName());
+        if(GoogleSignIn.getLastSignedInAccount(this)!=null) {
+            Fitness.getRecordingClient(this, Objects.requireNonNull(GoogleSignIn.getLastSignedInAccount(this)))
+                    .subscribe(TYPE_STEP_COUNT_DELTA)
+                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            Log.i(TAG, "Successfully subscribed!");
                         }
-                    }
-                });
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Log.i(TAG, "There was a problem subscribing.");
+                        }
+                    });
+            Fitness.getRecordingClient(this, GoogleSignIn.getLastSignedInAccount(this))
+                    .listSubscriptions(TYPE_STEP_COUNT_DELTA)
+                    .addOnSuccessListener(new OnSuccessListener<List<Subscription>>() {
+                        @Override
+                        public void onSuccess(List<Subscription> subscriptions) {
+                            for (Subscription sc : subscriptions) {
+                                DataType dt = sc.getDataType();
+                                Log.i(TAG, "Active subscription for data type: " + dt.getName());
+                            }
+                        }
+                    });
+        }
     }
 
     private void unsubscribeSteps(){
@@ -426,6 +428,7 @@ public class User extends AppCompatActivity
                                 Log.i(TAG, "Connected!!!");
                                 // Now you can make calls to the Fitness APIs.  What to do?
                                 // Subscribe to some data sources!
+
                                 subscribeSteps();
                             }
 
