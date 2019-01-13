@@ -17,9 +17,9 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-public class LogInActivity extends AppCompatActivity {
+public class LogInActivity extends BaseActivity {
 
-    private FirebaseAuth mAuth;
+    // private FirebaseAuth mAuth;
     private static final String TAG = "LoginActivity";
     private EditText emailField;
     private EditText passwordField;
@@ -29,7 +29,7 @@ public class LogInActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log_in);
-        mAuth = FirebaseAuth.getInstance();
+        // mAuth = FirebaseAuth.getInstance();
         emailField = findViewById(R.id.emailField);
         passwordField = findViewById(R.id.passwordField);
         loginButton = findViewById(R.id.loginButton);
@@ -50,14 +50,16 @@ public class LogInActivity extends AppCompatActivity {
     }
 
     private void login(String email,String password){
-        mAuth.signInWithEmailAndPassword(email, password)
+        // mAuth.signInWithEmailAndPassword(email, password)
+        dao.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d(TAG, "signInWithEmail:success");
-                            FirebaseUser user = mAuth.getCurrentUser();
+                            // FirebaseUser user = mAuth.getCurrentUser();
+                            FirebaseUser user = dao.getCurrentUser();
                             launchActivity(User.class);
                         } else {
                             // If sign in fails, display a message to the user.

@@ -58,7 +58,7 @@ public class DBRequestHandler {
         db = FirebaseFirestore.getInstance();
     }
 
-    void generateNewDB(boolean business){
+    void generateNewUser(boolean business){
         FirebaseUser currentUser = mAuth.getCurrentUser();
         mAuth = FirebaseAuth.getInstance();
         if (currentUser != null) {
@@ -100,7 +100,7 @@ public class DBRequestHandler {
 
     }
 
-    public void generateRequest(String targetCF,String subscribe,String companyName){
+    public void generateNewRequest(String targetCF, String subscribe, String companyName){
         FirebaseUser currentUser = mAuth.getCurrentUser();
         mAuth = FirebaseAuth.getInstance();
         if (currentUser != null) {
@@ -131,7 +131,7 @@ public class DBRequestHandler {
 
     }
 
-    public void updateDB(String key, Object object){
+    public void updateCurrentUserDB(String key, Object object){
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
             Map<String, Object> user = new HashMap<>();
@@ -179,34 +179,7 @@ public class DBRequestHandler {
         }
     }
 
-    public void getFromDBUser(final String key){
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        DocumentReference docRef;
-        if(currentUser!=null) {
-            docRef = db.collection("users").document(currentUser.getUid());
-                docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                        if (task.isSuccessful()) {
-                            DocumentSnapshot document = task.getResult();
-                            if (document!= null && document.exists()) {
-                                Map<String,Object> map = document.getData();
-                                if(map != null) {
-                                    if(map.get(key) != null){
-                                       output = Objects.requireNonNull(map.get(key)).toString();
-                                    }
-                                }
-                                Log.d(TAG, "DocumentSnapshot data: " + document.getData());
-                            } else {
-                                Log.d(TAG, "No such document");
-                            }
-                        } else {
-                            Log.d(TAG, "get failed with ", task.getException());
-                        }
-                    }
-            });
-        }
-    }
+
 
     public void getDBAverageWeight(int max_age, int min_age, LatLng max,LatLng min){
         FirebaseUser currentUser = mAuth.getCurrentUser();
@@ -246,64 +219,8 @@ public class DBRequestHandler {
 
     }
 
-    public String getDbLastName() {
-        return dbLastName;
-    }
-
-    public String getDbCF() {
-        return dbCF;
-    }
-
-    public String getDbName() {
-        return dbName;
-    }
-
-    public String getDbPhone() {
-        return dbPhone;
-    }
-
-    public String getDbYear() {
-        return dbYear;
-    }
-
-    public String getDbMonth() {
-        return dbMonth;
-    }
-
-    public String getDbDay() {
-        return dbDay;
-    }
-
-    public String getDbGender() {
-        return dbGender;
-    }
-
-    public String getDbMale() {
-        return dbMale;
-    }
-
-    public String getDbFemale() {
-        return dbFemale;
-    }
-
-    public String getDbLatitude() {
-        return dbLatitude;
-    }
-
-    public String getDbLongitude() {
-        return dbLongitude;
-    }
-
-    public String getDbHeight() {
-        return output;
-    }
-
     public String getDbWeight() {
         return dbWeight;
-    }
-
-    public int getAverageWeight() {
-        return averageWeight;
     }
 
 }

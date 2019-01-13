@@ -4,7 +4,6 @@ package com.trackme.trackme;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,26 +12,18 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
-
 import static android.content.ContentValues.TAG;
 
 
-public class Requests extends Fragment {
+public class Requests extends BaseFragment {
 
-    private FirebaseFirestore db;
+    // private FirebaseFirestore db;
     private FirebaseAuth mAuth;
     private TextView total;
     private int requests = 0;
@@ -51,7 +42,7 @@ public class Requests extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_requests, container, false);
         mAuth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
+        // db = FirebaseFirestore.getInstance();
         total = view.findViewById(R.id.totalRequests);
         company[0] = view.findViewById(R.id.companyName1);
         company[1] = view.findViewById(R.id.companyName2);
@@ -77,39 +68,31 @@ public class Requests extends Fragment {
     }
 
     private void getRequests(){
-
         if (getArguments() != null) {
-            db.collection("requests")
-                    .whereEqualTo("CF",getArguments().getString("CF"))
-                    .get()
-                    .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                        @Override
-                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                            if (task.isSuccessful()) {
-                                for (QueryDocumentSnapshot document : task.getResult()) {
-                                    if (document.get("ApprovalStatus").toString().equals("Pending")) {
-                                        Log.d(TAG, document.getId() + " => " + document.getData());
-                                        if (requests < 5) {
-                                            if(document.get("Subscribe").equals("true")) {
-                                                company[requests].setText(document.get("Name").toString()+ " (S)");
-                                            }
-                                            else {
-                                                company[requests].setText(document.get("Name").toString());
+            String cf = getArguments().getString("CF");
+            DAO dao = new DAO();
 
-                                            }
-                                            setAcceptDeny(document.getId(), requests);
-                                        }
-                                        requests++;
-                                    }
+            dao.getRequests(cf).addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                    if (task.isSuccessful()) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            if (document.get("ApprovalStatus").toString().equals("Pending")) {
+                                Log.d(TAG, document.getId() + " => " + document.getData());
+                                if (requests < 5) {
+                                    company[requests].setText(document.get("Name").toString());
+                                    setAcceptDeny(document.getId(), requests);
                                 }
-                                total.setText(Integer.toString(requests));
-                            } else {
-                                Log.d(TAG, "Error getting documents: ", task.getException());
+                                requests++;
                             }
                         }
-                    });
+                        total.setText(Integer.toString(requests));
+                    } else {
+                        Log.d(TAG, "Error getting documents: ", task.getException());
+                    }
+                }
+            });
         }
-
     }
 
     private  void setAcceptDeny(final String documentID, final int requests){

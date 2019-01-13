@@ -15,26 +15,23 @@ import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Map;
 import java.util.Objects;
 
-import static android.content.ContentValues.TAG;
 import static java.text.DateFormat.getDateInstance;
 
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class FitnessLevel extends Fragment {
+public class FitnessLevel extends BaseFragment {
     private static final String TAG = "WE";
-    private FirebaseFirestore db;
-    private FirebaseAuth mAuth;
+    // private FirebaseFirestore db;
+    // private FirebaseAuth mAuth;
     private DBRequestHandler mDBRequestHandler;
     private EditText weight;
     private EditText height;
@@ -61,8 +58,8 @@ public class FitnessLevel extends Fragment {
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_fitness_level, container, false);
-        mAuth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
+        // mAuth = FirebaseAuth.getInstance();
+        // db = FirebaseFirestore.getInstance();
         mDBRequestHandler = new DBRequestHandler();
         weight = view.findViewById(R.id.weight);
         height = view.findViewById(R.id.height);
@@ -82,10 +79,13 @@ public class FitnessLevel extends Fragment {
         return view;
     }
     private void filler(){
-        FirebaseUser currentUser = mAuth.getCurrentUser();
+        // FirebaseUser currentUser = mAuth.getCurrentUser();
+        FirebaseUser currentUser = dao.getCurrentUser();
         DocumentReference docRef;
         if(currentUser!=null) {
-            docRef = db.collection("users").document(currentUser.getUid());
+            // OLD
+            // docRef = db.collection("users").document(currentUser.getUid());
+            docRef = dao.getUserDocument(currentUser.getUid());
             docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                 @Override
                 public void onComplete(@NonNull Task<DocumentSnapshot> task) {
@@ -159,9 +159,9 @@ public class FitnessLevel extends Fragment {
 
     private void updateStats(){
         if(!weight.getText().toString().equals("") && !height.getText().toString().equals("")) {
-            mDBRequestHandler.updateDB(dbHeight,Integer.parseInt(height.getText().toString()));
-            mDBRequestHandler.updateDB(mDBRequestHandler.getDbWeight(),Integer.parseInt(weight.getText().toString()));
-            mDBRequestHandler.updateDB(dbSteps,Integer.toString(daily_steps));
+            mDBRequestHandler.updateCurrentUserDB(dbHeight,Integer.parseInt(height.getText().toString()));
+            mDBRequestHandler.updateCurrentUserDB(mDBRequestHandler.getDbWeight(),Integer.parseInt(weight.getText().toString()));
+            mDBRequestHandler.updateCurrentUserDB(dbSteps,Integer.toString(daily_steps));
             bmi_calc = Float.parseFloat(weight.getText().toString()) * (10000) / (Float.parseFloat(height.getText().toString()) * Float.parseFloat(height.getText().toString()));
             bmi_calc = Math.round(bmi_calc * 100) / 100.0;
             bmi.setText(Double.toString(bmi_calc));
@@ -182,7 +182,7 @@ public class FitnessLevel extends Fragment {
                 hint.setText("Obese: You are currently obese!!! this means that you are eating way over what you should and are not taking enough nutrients,stop consuming junk food and start walking outside, our planet is wonderful,consult a physician for mor infos");
                 hint.setTextColor(Color.RED);
             }
-            mDBRequestHandler.updateDB(dbBmi,Double.toString(bmi_calc));
+            mDBRequestHandler.updateCurrentUserDB(dbBmi,Double.toString(bmi_calc));
 
             updateFitnessLevel();
         }

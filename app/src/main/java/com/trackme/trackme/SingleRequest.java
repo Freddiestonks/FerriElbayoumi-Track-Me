@@ -18,7 +18,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Map;
 import java.util.Objects;
@@ -29,13 +28,13 @@ import static android.content.ContentValues.TAG;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SingleRequest extends Fragment {
+public class SingleRequest extends BaseFragment {
 
     private EditText cf;
     private CheckBox subscribe;
     private Button mButton;
     private String companyName = "Unknown Company";
-    private FirebaseFirestore db;
+    // private FirebaseFirestore db;
     private FirebaseAuth mAuth;
 
 
@@ -48,7 +47,7 @@ public class SingleRequest extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         mAuth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
+        // db = FirebaseFirestore.getInstance();
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_single_request, container, false);
         cf = view.findViewById(R.id.userCF);
@@ -66,7 +65,9 @@ public class SingleRequest extends Fragment {
                 FirebaseUser currentUser = mAuth.getCurrentUser();
                 DocumentReference docRef;
                 if(currentUser!=null) {
-                    docRef = db.collection("users").document(currentUser.getUid());
+                    docRef = dao.getUserDocument(currentUser.getUid());
+                    // OLD
+                    // docRef = db.collection("users").document(currentUser.getUid());
                     docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                         @Override
                         public void onComplete(@NonNull Task<DocumentSnapshot> task) {
@@ -77,7 +78,7 @@ public class SingleRequest extends Fragment {
                                     if(map != null) {
                                         if(map.get("Name") != null){
                                             companyName = Objects.requireNonNull(map.get("Name")).toString();
-                                            dbRequestHandler.generateRequest(cf.getText().toString().toUpperCase(),Boolean.toString(subscribe.isChecked()),companyName);
+                                            dbRequestHandler.generateNewRequest(cf.getText().toString().toUpperCase(),Boolean.toString(subscribe.isChecked()),companyName);
                                         }
                                     }
                                     Log.d(TAG, "DocumentSnapshot data: " + document.getData());

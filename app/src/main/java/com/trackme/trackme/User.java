@@ -57,10 +57,11 @@ import java.util.concurrent.TimeUnit;
 import static android.content.ContentValues.TAG;
 import static com.google.android.gms.fitness.data.DataType.TYPE_STEP_COUNT_DELTA;
 
-public class User extends AppCompatActivity
+public class User extends BaseActivity
         implements NavigationView.OnNavigationItemSelectedListener {
     private GoogleApiClient mClient = null;
-    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    // OLD
+    // private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private static final int GOOGLE_FIT_PERMISSIONS_REQUEST_CODE = 0;
     private static final String LOG_TAG = "GOOGLE FIT";
     private FusedLocationProviderClient mFusedLocationClient;
@@ -152,7 +153,9 @@ public class User extends AppCompatActivity
         buildFitnessClient();
         weeklyTotal();
         if(currentUser!=null) {
-            docRef = db.collection("users").document(currentUser.getUid());
+            // OLD
+            // docRef = db.collection("users").document(currentUser.getUid());
+            docRef = dao.getUserDocument(currentUser.getUid());
             docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                 @Override
                 public void onComplete(@NonNull Task<DocumentSnapshot> task) {
@@ -287,7 +290,9 @@ public class User extends AppCompatActivity
         DocumentReference docRef = null;
 
         if (currentUser != null) {
-            docRef = db.collection("users").document(currentUser.getUid());
+            // OLD
+            // docRef = db.collection("users").document(currentUser.getUid());
+            docRef = dao.getUserDocument(currentUser.getUid());
             docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                 @Override
                 public void onComplete(@NonNull Task<DocumentSnapshot> task) {
@@ -341,7 +346,9 @@ public class User extends AppCompatActivity
             Map<String, Object> user = new HashMap<>();
             user.put("Latitude", latitude);
             user.put("Longitude",longitude);
-            db.collection("users").document(currentUser.getUid()).update(user)
+            // OLD
+            // db.collection("users").document(currentUser.getUid()).update(user)
+            dao.getUserDocument(currentUser.getUid()).update(user)
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {

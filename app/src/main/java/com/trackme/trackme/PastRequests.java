@@ -25,10 +25,10 @@ import static android.content.ContentValues.TAG;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class PastRequests extends Fragment {
+public class PastRequests extends BaseFragment {
 
-    private FirebaseAuth mAuth;
-    private FirebaseFirestore db;
+    // private FirebaseAuth mAuth;
+    // private FirebaseFirestore db;
     private TextView name;
     private TextView lastName;
     private TextView phone;
@@ -52,8 +52,8 @@ public class PastRequests extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        db = FirebaseFirestore.getInstance();
-        mAuth = FirebaseAuth.getInstance();
+        // db = FirebaseFirestore.getInstance();
+        // mAuth = FirebaseAuth.getInstance();
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
         name = view.findViewById(R.id.userName);
         lastName = view.findViewById(R.id.userLastName);
@@ -77,16 +77,18 @@ public class PastRequests extends Fragment {
             @Override
             public void onClick(View v) {
                if(!cf.getText().toString().equals("")){
-                   db.collection("requests")
-                           //TODO ocio qua cambia il CF
-                           .whereEqualTo("UserID",mAuth.getUid())
-                           .get()
+                    // OLD
+                    //  db.collection("requests")
+                    //          //TODO ocio qua cambia il CF
+                    //          .whereEqualTo("UserID",mAuth.getUid())
+                    //          .get()
+                    dao.getCurrentUserRequest()
                            .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                                @Override
                                public void onComplete(@NonNull Task<QuerySnapshot> task) {
                                    if (task.isSuccessful()) {
                                        for (QueryDocumentSnapshot document : task.getResult()) {
-                                           if (document.get("ApprovalStatus").toString().equals("Accepted")&&document.get("CF").toString().equals(cf.getText().toString())&&document.get("UserID").toString().equals(mAuth.getUid())) {
+                                           if (document.get("ApprovalStatus").toString().equals("Accepted")&&document.get("CF").toString().equals(cf.getText().toString())&&document.get("UserID").toString().equals(dao.getCurrentUser().getUid())) {
                                                Log.d(TAG, document.getId() + " => " + document.getData());
                                                accepted = true;
                                                if(document.get("Subscribe").toString().equals("false")){
@@ -96,9 +98,11 @@ public class PastRequests extends Fragment {
                                                }
                                            }
                                            if(accepted) {
-                                               db.collection("users")
-                                                       .whereEqualTo("CF", cf.getText().toString())
-                                                       .get()
+                                               // OLD
+                                               // db.collection("users")
+                                               //         .whereEqualTo("CF", cf.getText().toString())
+                                               //         .get()
+                                               dao.getUserByCf(cf.getText().toString())
                                                        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                                                            @Override
                                                            public void onComplete(@NonNull Task<QuerySnapshot> task) {
